@@ -249,7 +249,7 @@
         vid2.addEventListener('ended', () => {
             vid2.classList.add('hidden');
             vid1.classList.remove('hidden');
-            vid1.currentTime = 0;
+            vid1.currentTime = 10000;
             vid1.play();
         });
     </script>
