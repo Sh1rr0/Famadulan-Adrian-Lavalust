@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Profile</title>
+    <title>User Management</title>
     <style>
         * {
             margin: 0;
@@ -76,7 +76,7 @@
 
         /* Content */
         .container {
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 100px 20px 60px;
         }
@@ -95,67 +95,58 @@
             margin-bottom: 30px;
         }
 
-
         h1 {
             font-size: 24px;
             color: #fff;
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
         }
 
-        .info-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
         }
 
-        .info-table tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        thead tr {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .info-table tr:last-child {
+        thead th {
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 14px;
+            color: #ccc;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:last-child {
             border-bottom: none;
         }
 
-        .info-table td {
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        tbody td {
             padding: 12px 10px;
             font-size: 15px;
             color: #fff;
         }
 
-        .info-table td:first-child {
-            font-weight: bold;
-            color: #ccc;
-            width: 170px;
-        }
-
-        .socials-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #ccc;
-            margin-bottom: 12px;
-        }
-
-        .socials-list {
-            list-style: none;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .socials-list li a {
+        .badge {
             display: inline-block;
             background-color: rgba(44, 62, 80, 0.8);
             color: #fff;
-            padding: 8px 18px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 14px;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 12px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: background-color 0.3s;
-        }
-
-        .socials-list li a:hover {
-            background-color: #3498db;
         }
     </style>
 </head>
@@ -173,7 +164,7 @@
 
     <nav>
         <a href="/student">Home</a>
-         <a href="/student/profile">Student Profile</a>
+        <a href="/student/profile">Student Profile</a>
         <a href="/users">Users</a>
     </nav>
 
@@ -181,64 +172,37 @@
         <div class="card">
 
             <div class="header">
-                <h1>Student Information</h1>
+                <h1>User Management</h1>
             </div>
 
-            <table class="info-table">
-                <tr>
-                    <td>Student ID</td>
-                    <td><?= $student_id; ?></td>
-                </tr>
-                <tr>
-                    <td>Name</td>
-                    <td><?= $name; ?></td>
-                </tr>
-                <tr>
-                    <td>Course</td>
-                    <td><?= $course; ?></td>
-                </tr>
-                <tr>
-                    <td>Year Level</td>
-                    <td><?= $year; ?></td>
-                </tr>
-                <tr>
-                    <td>Section</td>
-                    <td><?= $section; ?></td>
-                </tr>
-                <tr>
-                    <td>Email</td>
-                    <td><?= $email; ?></td>
-                </tr>
-                <tr>
-                    <td>Address</td>
-                    <td><?= $address; ?></td>
-                </tr>
-                <tr>
-                    <td>Contact Number</td>
-                    <td><?= $ContactNumber; ?></td>
-                </tr>
-                <tr>
-                    <td>Hobbies</td>
-                    <td><?= $hobbies; ?></td>
-                </tr>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($users as $user): ?>
+                    <tr>
+                        <td><span class="badge"><?= $user['id']; ?></span></td>
+                        <td><?= $user['firstname']; ?></td>
+                        <td><?= $user['lastname']; ?></td>
+                        <td><?= $user['email']; ?></td>
+                        <td><?= $user['username']; ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
             </table>
-
-            <p class="socials-title">Social Media</p>
-            <ul class="socials-list">
-                <?php foreach ($social_media as $platform => $link): ?>
-                    <li>
-                        <a href="<?= $link; ?>" target="_blank">
-                            <?= ucfirst($platform); ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
 
         </div>
     </div>
 
     <script>
-         
+       
          // 1. Grab references to BOTH video elements
     const vid1 = document.getElementById('vid1');
     const vid2 = document.getElementById('vid2');
