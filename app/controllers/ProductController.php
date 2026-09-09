@@ -12,7 +12,7 @@ class ProductController extends Controller
         }
     }
 
-    // READ - list all products
+    // READ
     public function index()
     {
         $data['products'] = $this->ProductModel->all();
@@ -26,7 +26,7 @@ class ProductController extends Controller
         $this->call->view('product_create_view');
     }
 
-    // CREATE - handle form submit
+    // CREATE - store
     public function store()
     {
         $this->ProductModel->insert([
@@ -46,15 +46,19 @@ class ProductController extends Controller
         $this->call->view('product_edit_view', $data);
     }
 
-    // UPDATE - handle form submit
+    // UPDATE - handle submit
     public function update($id)
     {
-        $this->ProductModel->where('id', $id)->update([
-            'product_name' => $_POST['product_name'],
-            'description'  => $_POST['description'],
-            'price'        => $_POST['price'],
-            'quantity'     => $_POST['quantity'],
-        ]);
+        $this->db->query(
+            "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ? WHERE id = ?",
+            [
+                $_POST['product_name'],
+                $_POST['description'],
+                $_POST['price'],
+                $_POST['quantity'],
+                $id
+            ]
+        );
         header('Location: /products');
         exit;
     }
@@ -62,7 +66,7 @@ class ProductController extends Controller
     // DELETE
     public function delete($id)
     {
-        $this->ProductModel->where('id', $id)->delete();
+        $this->db->query("DELETE FROM products WHERE id = ?", [$id]);
         header('Location: /products');
         exit;
     }
