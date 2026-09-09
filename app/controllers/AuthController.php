@@ -14,6 +14,18 @@ class AuthController extends Controller
 
     public function login()
     {
+         $this->call->library('auth');
+
+        if ($this->io->method() == 'post') {
+            $username = $this->io->post('username');
+            $password = $this->io->post('password');
+
+            if ($this->auth->login($username, $password)) {
+                redirect('auth/dashboard');
+            } else {
+                echo 'Login failed!';
+            }
+        }
         $this->call->view('login_view');
     }
 
