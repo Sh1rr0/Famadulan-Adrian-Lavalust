@@ -6,67 +6,77 @@ class ProductController extends Controller
     public function __construct()
     {
         parent::__construct();
+
         $this->call->model('ProductModel');
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
 
-    // READ
+    // READ - display all products
     public function index()
     {
         $data['products'] = $this->ProductModel->all();
         $data['username'] = $_SESSION['username'] ?? 'User';
+
         $this->call->view('products_view', $data);
     }
 
-    // CREATE - show form
+    // CREATE - show create form
     public function create()
     {
         $this->call->view('product_create_view');
     }
 
-    // CREATE - store
+    // CREATE - save product
     public function store()
     {
         $this->ProductModel->insert([
-            'product_name' => $_POST['product_name'],
-            'description'  => $_POST['description'],
-            'price'        => $_POST['price'],
-            'quantity'     => $_POST['quantity'],
+            'product_name' => $_POST['product_name'] ?? '',
+            'description'  => $_POST['description'] ?? '',
+            'price'        => $_POST['price'] ?? 0,
+            'quantity'     => $_POST['quantity'] ?? 0
         ]);
+
         header('Location: /products');
         exit;
     }
 
-    // UPDATE - show form
+    // UPDATE - show edit form
     public function edit($id)
     {
-        $data['product'] = $this->ProductModel->find($id);
+        $product = $this->ProductModel->find($id);
+
+        if (!$product) {
+            header('Location: /products');
+            exit;
+        }
+
+        $data['product'] = $product;
+
         $this->call->view('product_edit_view', $data);
     }
 
-    // UPDATE - handle submit
+    // UPDATE - save changes
     public function update($id)
     {
-        $this->db->query(
-            "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ? WHERE id = ?",
-            [
-                $_POST['product_name'],
-                $_POST['description'],
-                $_POST['price'],
-                $_POST['quantity'],
-                $id
-            ]
-        );
+        $this->ProductModel->update($id, [
+            'product_name' => $_POST['product_name'] ?? '',
+            'description'  => $_POST['description'] ?? '',
+            'price'        => $_POST['price'] ?? 0,
+            'quantity'     => $_POST['quantity'] ?? 0
+        ]);
+
         header('Location: /products');
         exit;
     }
 
-    // DELETE
+    // DELETE - delete product
     public function delete($id)
     {
-        $this->db->query("DELETE FROM products WHERE id = ?", [$id]);
+        $this->ProductModel->delete($id);
+
         header('Location: /products');
         exit;
     }

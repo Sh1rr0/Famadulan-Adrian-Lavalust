@@ -3,15 +3,19 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 
 class AuthMiddleware
 {
-    public function run()
+   public function handle(Closure $next)
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        $lava = lava_instance();
+
+        $lava->call->library('session');
+
+        if (!$lava->session->userdata('logged_in')) {
+
+            redirect('login');
+
+            return;
         }
 
-        if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-            header('Location: /login');
-            exit;
-        }
+        return $next();
     }
 }

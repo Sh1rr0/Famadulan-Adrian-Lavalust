@@ -39,6 +39,15 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 |--------------------------------------------------------------------------
 |
 | Used for adding middlewares
-|
+|$config['middlewares'] = ['auth' => new AuthMiddleware()];
 */
-$config['middlewares'] = ['auth' => new AuthMiddleware()];
+
+
+$config['middlewares'] = array(
+
+    'auth' => load_class(
+        'AuthMiddleware',
+        'middlewares'
+    ),
+
+);

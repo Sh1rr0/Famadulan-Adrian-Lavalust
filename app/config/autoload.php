@@ -107,4 +107,6 @@ $autoload['models'] = array();
 |
 */
 $autoload['configs'] = array();
+$autoload['libraries'] = ['database'];
+$autoload['libraries'] = ['database', 'session'];
 ?>
