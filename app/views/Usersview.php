@@ -166,6 +166,7 @@
         <a href="/student">Home</a>
         <a href="/student/profile">Student Profile</a>
         <a href="/users">Users</a>
+         <a href="/login">Login</a>
     </nav>
 
     <div class="container">
