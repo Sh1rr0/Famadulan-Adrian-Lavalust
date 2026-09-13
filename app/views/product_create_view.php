@@ -137,18 +137,25 @@
     </div>
 
     <script>
-        const vid1 = document.getElementById('vid1');
-        const vid2 = document.getElementById('vid2');
-        vid1.addEventListener('ended', () => {
-            vid1.classList.add('hidden');
-            vid2.classList.remove('hidden');
-            vid2.currentTime = 0; vid2.play();
-        });
-        vid2.addEventListener('ended', () => {
-            vid2.classList.add('hidden');
-            vid1.classList.remove('hidden');
-            vid1.currentTime = 0; vid1.play();
-        });
+         
+         // 1. Grab references to BOTH video elements
+    const vid1 = document.getElementById('vid1');
+    const vid2 = document.getElementById('vid2');
+
+    // 2. Hide vid1 immediately and make sure vid2 is visible and playing
+    vid1.classList.add('hidden');
+    vid1.pause(); 
+    
+    vid2.classList.remove('hidden');
+    vid2.currentTime = 0;
+    vid2.play().catch(err => console.log("Autoplay blocked, user interaction required:", err));
+
+    // 3. When vid2 ends, loop it back to the beginning seamlessly
+    vid2.addEventListener('ended', () => {
+        vid2.currentTime = 0;
+        vid2.play();
+    });
     </script>
+
 </body>
 </html>
