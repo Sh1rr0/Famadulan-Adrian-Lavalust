@@ -7,14 +7,19 @@ class ProductController extends Controller
     {
         parent::__construct();
 
-        $this->call->model('ProductModel');
-
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
+        // Prevent unauthenticated users from accessing products
+        if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+            header('Location: /login');
+            exit;
+        }
+
+        $this->call->model('ProductModel');
     }
 
-    // READ - display all products
     public function index()
     {
         $data['products'] = $this->ProductModel->all();
@@ -23,13 +28,11 @@ class ProductController extends Controller
         $this->call->view('products_view', $data);
     }
 
-    // CREATE - show create form
     public function create()
     {
         $this->call->view('product_create_view');
     }
 
-    // CREATE - save product
     public function store()
     {
         $this->ProductModel->insert([
@@ -43,7 +46,6 @@ class ProductController extends Controller
         exit;
     }
 
-    // UPDATE - show edit form
     public function edit($id)
     {
         $product = $this->ProductModel->find($id);
@@ -54,11 +56,9 @@ class ProductController extends Controller
         }
 
         $data['product'] = $product;
-
         $this->call->view('product_edit_view', $data);
     }
 
-    // UPDATE - save changes
     public function update($id)
     {
         $this->ProductModel->update($id, [
@@ -72,7 +72,6 @@ class ProductController extends Controller
         exit;
     }
 
-    // DELETE - delete product
     public function delete($id)
     {
         $this->ProductModel->delete($id);
