@@ -87,7 +87,7 @@ $config['refresh_token_expiration'] = 604800;
 | committed or exposed, rotate it. All existing tokens become invalid.
 |
 */
-$config['jwt_secret'] = getenv('JWT_SECRET') ?: '';
+$config['jwt_secret'] = getenv('JWT_SECRET') ?: '0cb2c4b35b9850ed4453a7b74544b218';
 
 /*
 |--------------------------------------------------------------------------
@@ -106,7 +106,7 @@ $config['jwt_secret'] = getenv('JWT_SECRET') ?: '';
 |   php -r "echo bin2hex(random_bytes(32));"
 |
 */
-$config['refresh_token_key'] = getenv('REFRESH_TOKEN_KEY') ?: '';
+$config['refresh_token_key'] = getenv('REFRESH_TOKEN_KEY') ?: '1860cfe8d3478c7eae13b26bb52810c7';
 
 /*
 |--------------------------------------------------------------------------
