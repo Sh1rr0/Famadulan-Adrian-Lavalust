@@ -69,3 +69,34 @@ $router->get('rollback', 'MigrationController::rollback');
 $router->get('rollback-all', 'MigrationController::rollback_all');
 $router->get('refresh', 'MigrationController::refresh');
 $router->get('status', 'MigrationController::status');
+
+$router->post(
+    '/api/login',
+    'AuthController::apiLogin'
+);
+
+$router->post(
+    '/api/logout',
+    'AuthController::apiLogout'
+);
+
+
+$router->get(
+    '/api/products',
+    'ProductController::apiIndex'
+);
+
+$router->post(
+    '/api/products',
+    'ProductController::apiStore'
+);
+
+$router->put(
+    '/api/products/{id}',
+    'ProductController::apiUpdate'
+);
+
+$router->delete(
+    '/api/products/{id}',
+    'ProductController::apiDelete'
+);
