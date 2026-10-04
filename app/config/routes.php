@@ -50,7 +50,7 @@ $router->get('/student/profile', 'StudentController::profile', ['middleware' => 
 $router->get('/users', 'UsersController::index');
 
 
-/**$router->get('/login', 'AuthController::login');
+$router->get('/login', 'AuthController::login');
 $router->post('/login', 'AuthController::authenticate');
 $router->get('/logout', 'AuthController::logout');
 
@@ -61,7 +61,7 @@ $router->post('/products/store', 'ProductController::store', ['middleware' => 'a
 $router->get('/products/edit/{id}', 'ProductController::edit', ['middleware' => 'auth']);
 $router->post('/products/update/{id}', 'ProductController::update', ['middleware' => 'auth']);
 $router->get('/products/delete/{id}', 'ProductController::delete', ['middleware' => 'auth']);
- */
+ 
 
 $router->get('create-migration/{migration_class}', 'MigrationController::create_migration');
 $router->get('migrate', 'MigrationController::migrate');
