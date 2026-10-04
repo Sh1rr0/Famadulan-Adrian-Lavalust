@@ -62,3 +62,9 @@ $router->get('/products/edit/{id}', 'ProductController::edit', ['middleware' => 
 $router->post('/products/update/{id}', 'ProductController::update', ['middleware' => 'auth']);
 $router->get('/products/delete/{id}', 'ProductController::delete', ['middleware' => 'auth']);
 
+$router->get('create-migration/{migration_class}', 'MigrationController::create_migration');
+$router->get('migrate', 'MigrationController::migrate');
+$router->get('rollback', 'MigrationController::rollback');
+$router->get('rollback-all', 'MigrationController::rollback_all');
+$router->get('refresh', 'MigrationController::refresh');
+$router->get('status', 'MigrationController::status');
