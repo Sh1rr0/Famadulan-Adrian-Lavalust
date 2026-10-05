@@ -133,7 +133,7 @@ $config['jwt_verify_user'] = TRUE;
 | is TRUE.
 |
 */
-$config['users_table'] = 'users';
+$config['users_table'] = 'auth_users';
 
 /*
 |--------------------------------------------------------------------------

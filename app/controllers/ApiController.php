@@ -16,12 +16,19 @@ class ApiController extends Controller
         $password = is_string($input['password'] ?? null) ? $input['password'] : '';
 
         $stmt = $this->db->raw(
-            'SELECT id, username, password, role FROM users WHERE username = ? AND is_active = 1 LIMIT 1',
+            'SELECT id, username, password, role FROM auth_users WHERE username = ? LIMIT 1',
             [$username]
         );
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && $this->verify_password($password, $user['password'])) {
+            if (password_get_info($user['password'])['algoName'] === 'unknown') {
+                $this->db->raw(
+                    'UPDATE auth_users SET password = ? WHERE id = ?',
+                    [password_hash($password, PASSWORD_DEFAULT), $user['id']]
+                );
+            }
+
             $tokens = $this->api->issue_tokens([
                 'id'   => $user['id'],
                 'role' => $user['role'],
@@ -208,7 +215,7 @@ class ApiController extends Controller
         $this->require_scope($auth, 'read');
 
         $stmt = $this->db->raw(
-            "SELECT id, username, email, role, created_at FROM users WHERE id = ?",
+            "SELECT id, username, role FROM auth_users WHERE id = ?",
             [$auth['sub']]
         );
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -229,6 +236,16 @@ class ApiController extends Controller
         if (!in_array($scope, $auth['scopes'] ?? [], true)) {
             $this->api->respond_error('Forbidden', 403);
         }
+    }
+
+    private function verify_password(string $password, string $stored_password): bool
+    {
+        if (password_verify($password, $stored_password)) {
+            return true;
+        }
+
+        return password_get_info($stored_password)['algoName'] === 'unknown'
+            && hash_equals($stored_password, $password);
     }
 
     private function validated_id($id): ?int

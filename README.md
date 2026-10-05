@@ -208,6 +208,12 @@ returned by login. Product requests use JSON fields `product_name`,
 `description`, `price`, and `quantity`. Access to product writes/deletes is
 determined by the user's database role.
 
+API authentication uses the `auth_users` table. Apply migration
+`006_prepare_auth_users_for_api` before deploying the API changes; it adds
+database-backed roles and upgrades legacy plain-text passwords to password
+hashes. The existing `admin` account is assigned the `admin` role. New accounts
+default to the `user` role; assign elevated roles only to trusted accounts.
+
 Configure `JWT_SECRET` and `REFRESH_TOKEN_KEY` as separate, randomly generated
 secrets of at least 32 characters in the deployment environment. Set
 `CORS_ALLOW_ORIGIN` to the exact deployed frontend origin. The API intentionally

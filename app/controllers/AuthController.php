@@ -26,7 +26,13 @@ class AuthController extends Controller
 
     $user = $this->AuthModel->findByUsername($username);
 
-    if ($user && $password === $user['password']) {
+    if ($user && $this->verify_password($password, $user['password'])) {
+        if (password_get_info($user['password'])['algoName'] === 'unknown') {
+            $this->db->raw(
+                'UPDATE auth_users SET password = ? WHERE id = ?',
+                [password_hash($password, PASSWORD_DEFAULT), $user['id']]
+            );
+        }
 
         session_regenerate_id(true);
 
@@ -41,6 +47,16 @@ class AuthController extends Controller
     header('Location: /login?error=1');
     exit;
 }
+
+    private function verify_password(string $password, string $stored_password): bool
+    {
+        if (password_verify($password, $stored_password)) {
+            return true;
+        }
+
+        return password_get_info($stored_password)['algoName'] === 'unknown'
+            && hash_equals($stored_password, $password);
+    }
 
     public function logout()
     {
