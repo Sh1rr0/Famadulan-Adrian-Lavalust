@@ -145,7 +145,7 @@ $config['users_table'] = 'users';
 | a browser, so set your real domain in production.
 |
 */
-$config['allow_origin'] = getenv('CORS_ALLOW_ORIGIN') ?: '';
+$config['allow_origin'] = getenv('CORS_ALLOW_ORIGIN') ?: 'https://my-react-app-aj-b506.vercel.app';
 
 /*
 |--------------------------------------------------------------------------
