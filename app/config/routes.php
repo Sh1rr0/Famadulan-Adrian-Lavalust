@@ -72,31 +72,44 @@ $router->get('status', 'MigrationController::status');
 
 $router->post(
     '/api/login',
-    'AuthController::apiLogin'
+    'ApiController::login'
 );
 
 $router->post(
     '/api/logout',
-    'AuthController::apiLogout'
+    'ApiController::logout'
 );
 
+$router->post(
+    '/api/refresh',
+    'ApiController::refresh'
+);
 
 $router->get(
     '/api/products',
-    'ProductController::apiIndex'
+    'ApiController::products'
 );
 
 $router->post(
     '/api/products',
-    'ProductController::apiStore'
+    'ApiController::createProduct'
 );
 
 $router->put(
     '/api/products/{id}',
-    'ProductController::apiUpdate'
+    'ApiController::updateProduct'
 );
 
 $router->delete(
     '/api/products/{id}',
-    'ProductController::apiDelete'
+    'ApiController::deleteProduct'
 );
+
+$router->get('/api/profile', 'ApiController::profile');
+
+$router->options('/api/login', 'ApiController::options');
+$router->options('/api/logout', 'ApiController::options');
+$router->options('/api/refresh', 'ApiController::options');
+$router->options('/api/profile', 'ApiController::options');
+$router->options('/api/products', 'ApiController::options');
+$router->options('/api/products/{id}', 'ApiController::options');

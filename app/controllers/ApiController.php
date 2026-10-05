@@ -1,14 +1,24 @@
 <?php
 class ApiController extends Controller
 {
+    public function __construct()
+    {
+        parent::__construct();
+        $this->api = $this->call->library('api');
+    }
+
     public function login()
     {
         $this->api->require_method('POST');
+        $this->api->rate_limit();
         $input    = $this->api->body();
-        $username = $input['username'] ?? '';
-        $password = $input['password'] ?? '';
+        $username = is_string($input['username'] ?? null) ? $input['username'] : '';
+        $password = is_string($input['password'] ?? null) ? $input['password'] : '';
 
-        $stmt = $this->db->raw('SELECT * FROM users WHERE username = ?', [$username]);
+        $stmt = $this->db->raw(
+            'SELECT id, username, password, role FROM users WHERE username = ? AND is_active = 1 LIMIT 1',
+            [$username]
+        );
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
@@ -26,8 +36,107 @@ class ApiController extends Controller
     {
         $this->api->require_method('POST');
         $input = $this->api->body();
-        $this->api->revoke_refresh_token($input['refresh_token'] ?? '');
+        $refresh_token = is_string($input['refresh_token'] ?? null) ? $input['refresh_token'] : '';
+        if ($refresh_token !== '') {
+            $this->api->revoke_refresh_token($refresh_token);
+        }
         $this->api->respond(['message' => 'Logged out']);
+    }
+
+    public function options()
+    {
+        $this->api->respond(null, 204);
+    }
+
+    public function products()
+    {
+        $this->api->require_method('GET');
+        $this->api->rate_limit();
+        $auth = $this->api->require_jwt();
+        $this->require_scope($auth, 'read');
+
+        $products = $this->db->raw(
+            'SELECT id, product_name, description, price, quantity, created_at, updated_at
+             FROM products ORDER BY id DESC'
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->api->respond($products);
+    }
+
+    public function createProduct()
+    {
+        $this->api->require_method('POST');
+        $this->api->rate_limit();
+        $auth = $this->api->require_jwt();
+        $this->require_scope($auth, 'write');
+
+        $input = $this->api->body();
+        $product = $this->validated_product($input);
+        if (isset($product['error'])) {
+            $this->api->respond_error($product['error'], 422);
+        }
+
+        $this->db->raw(
+            'INSERT INTO products (product_name, description, price, quantity)
+             VALUES (?, ?, ?, ?)',
+            [$product['product_name'], $product['description'], $product['price'], $product['quantity']]
+        );
+
+        $this->api->respond(['message' => 'Product created'], 201);
+    }
+
+    public function updateProduct($id)
+    {
+        $this->api->require_method('PUT');
+        $this->api->rate_limit();
+        $auth = $this->api->require_jwt();
+        $this->require_scope($auth, 'write');
+        $product_id = $this->validated_id($id);
+        if ($product_id === null) {
+            $this->api->respond_error('Invalid product id', 422);
+        }
+
+        $input = $this->api->body();
+        $product = $this->validated_product($input);
+        if (isset($product['error'])) {
+            $this->api->respond_error($product['error'], 422);
+        }
+
+        $result = $this->db->raw(
+            'UPDATE products
+             SET product_name = ?, description = ?, price = ?, quantity = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?',
+            [$product['product_name'], $product['description'], $product['price'], $product['quantity'], $product_id]
+        );
+
+        if ($result->rowCount() === 0) {
+            $exists = $this->db->raw('SELECT id FROM products WHERE id = ? LIMIT 1', [$product_id])
+                               ->fetch(PDO::FETCH_ASSOC);
+            if (!$exists) {
+                $this->api->respond_error('Product not found', 404);
+            }
+        }
+
+        $this->api->respond(['message' => 'Product updated']);
+    }
+
+    public function deleteProduct($id)
+    {
+        $this->api->require_method('DELETE');
+        $this->api->rate_limit();
+        $auth = $this->api->require_jwt();
+        $this->require_scope($auth, 'delete');
+        $product_id = $this->validated_id($id);
+        if ($product_id === null) {
+            $this->api->respond_error('Invalid product id', 422);
+        }
+
+        $result = $this->db->raw('DELETE FROM products WHERE id = ?', [$product_id]);
+        if ($result->rowCount() === 0) {
+            $this->api->respond_error('Product not found', 404);
+        }
+
+        $this->api->respond(['message' => 'Product deleted']);
     }
 
     public function list()
@@ -83,6 +192,7 @@ class ApiController extends Controller
     public function profile()
     {
         $auth = $this->api->require_jwt();
+        $this->require_scope($auth, 'read');
 
         $stmt = $this->db->raw(
             "SELECT id, username, email, role, created_at FROM users WHERE id = ?",
@@ -97,6 +207,52 @@ class ApiController extends Controller
     {
         $this->api->require_method('POST');
         $input = $this->api->body();
-        $this->api->refresh_access_token($input['refresh_token'] ?? '');
+        $refresh_token = is_string($input['refresh_token'] ?? null) ? $input['refresh_token'] : '';
+        $this->api->refresh_access_token($refresh_token);
+    }
+
+    private function require_scope(array $auth, string $scope): void
+    {
+        if (!in_array($scope, $auth['scopes'] ?? [], true)) {
+            $this->api->respond_error('Forbidden', 403);
+        }
+    }
+
+    private function validated_id($id): ?int
+    {
+        if (!is_string($id) && !is_int($id)) {
+            return null;
+        }
+
+        $validated = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        return $validated === false ? null : $validated;
+    }
+
+    private function validated_product(array $input): array
+    {
+        $name = $input['product_name'] ?? null;
+        $description = $input['description'] ?? '';
+        $price = $input['price'] ?? null;
+        $quantity = $input['quantity'] ?? null;
+
+        if (!is_string($name) || trim($name) === '') {
+            return ['error' => 'product_name is required'];
+        }
+        if (!is_string($description)) {
+            return ['error' => 'description must be a string'];
+        }
+        if (!is_numeric($price) || (float) $price < 0 || (float) $price > 99999999.99) {
+            return ['error' => 'price must be between 0 and 99999999.99'];
+        }
+        if (filter_var($quantity, FILTER_VALIDATE_INT) === false || (int) $quantity < 0) {
+            return ['error' => 'quantity must be a non-negative integer'];
+        }
+
+        return [
+            'product_name' => trim($name),
+            'description' => $description,
+            'price' => (float) $price,
+            'quantity' => (int) $quantity,
+        ];
     }
 }

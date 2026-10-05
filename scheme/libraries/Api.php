@@ -204,7 +204,7 @@ class Api
             show_error('jwt_secret and refresh_token_key must be different values.');
         }
 
-        handle_cors();
+        $this->handle_cors();
     }
 
     /**
@@ -228,6 +228,28 @@ class Api
         // Reject trivially low-entropy values such as "aaaaaaaa..." or "1234123412...".
         if (count(array_unique(str_split($secret))) < 10) {
             show_error("{$name} has too little entropy. Use a random value.");
+        }
+    }
+
+    private function handle_cors(): void
+    {
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allow_origin = (string) $this->allow_origin;
+        $origin_is_allowed = $allow_origin === '*' || ($origin !== '' && hash_equals($allow_origin, $origin));
+
+        if ($origin_is_allowed) {
+            header('Access-Control-Allow-Origin: ' . ($allow_origin === '*' ? '*' : $origin));
+            if ($allow_origin !== '*') {
+                header('Vary: Origin');
+            }
+        }
+
+        header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+            http_response_code(204);
+            exit;
         }
     }
 
@@ -384,6 +406,7 @@ class Api
      */
     public function respond($data, $code = 200)
     {
+        header('Content-Type: application/json; charset=utf-8');
         http_response_code($code);
         echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit;
@@ -532,6 +555,7 @@ class Api
         $role_scopes = [
             'admin'  => ['read', 'write', 'delete'],
             'editor' => ['read', 'write'],
+            'moderator' => ['read', 'write'],
             'user'   => ['read'],
         ];
 

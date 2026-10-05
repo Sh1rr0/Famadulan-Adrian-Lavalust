@@ -185,35 +185,37 @@ $config['base_url'] = 'http://localhost:3000/';
 
 ---
 
-## Building a REST API
+## REST API
 
-LavaLust supports REST API development out of the box. Controllers can return JSON responses for API endpoints.
+The application API is served from the same origin as the PHP backend. Set the
+frontend's `VITE_API_BASE_URL` to the backend origin, without a trailing path
+(for example, `https://your-backend.onrender.com`).
 
-```php
-<?php
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/login` | Log in with `username` and `password`; returns access and refresh tokens |
+| `POST` | `/api/logout` | Revoke the supplied `refresh_token` |
+| `POST` | `/api/refresh` | Exchange a `refresh_token` for a new token pair |
+| `GET` | `/api/profile` | Return the authenticated user's profile |
+| `GET` | `/api/products` | List products |
+| `POST` | `/api/products` | Create a product |
+| `PUT` | `/api/products/{id}` | Update a product |
+| `DELETE` | `/api/products/{id}` | Delete a product |
 
-class Api extends Controller
-{
-    $this->call->library('api');
+For `/api/profile` and product routes, send the access token as
+`Authorization: Bearer <token>`. Logout and refresh use the `refresh_token`
+returned by login. Product requests use JSON fields `product_name`,
+`description`, `price`, and `quantity`. Access to product writes/deletes is
+determined by the user's database role.
 
-    public function users()
-    {
-        $this->api->require_method('GET');
-        $auth = $this->api->require_jwt(); 
+Configure `JWT_SECRET` and `REFRESH_TOKEN_KEY` as separate, randomly generated
+secrets of at least 32 characters in the deployment environment. Set
+`CORS_ALLOW_ORIGIN` to the exact deployed frontend origin. The API intentionally
+fails closed when either token secret is missing or weak.
 
-        $this->call->model('User_model');
-        $users = $this->User_model->getAll();
-
-        $this->api->respond(['data' => $users]);
-    }
-}
-```
-
-Route definition:
-
-```php
-$router->get('/api/users', 'Api::users');
-```
+Set the backend database environment variables to `DB_HOST`, `DB_PORT`,
+`DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME`. Run the app's migrations to ensure
+the `products` table exists.
 
 ---
 
