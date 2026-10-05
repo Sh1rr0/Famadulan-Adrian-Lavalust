@@ -128,9 +128,8 @@ $config['jwt_verify_user'] = TRUE;
 | Users Table
 |--------------------------------------------------------------------------
 |
-| Name of the table holding your users. It needs at least the columns
-| "id" and "role". Used when refreshing tokens and when jwt_verify_user
-| is TRUE.
+| Name of the table holding API accounts. It needs "id" and "username".
+| The admin account is identified by the username "admin".
 |
 */
 $config['users_table'] = 'auth_users';

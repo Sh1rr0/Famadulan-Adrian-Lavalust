@@ -205,14 +205,15 @@ frontend's `VITE_API_BASE_URL` to the backend origin, without a trailing path
 For `/api/profile` and product routes, send the access token as
 `Authorization: Bearer <token>`. Logout and refresh use the `refresh_token`
 returned by login. Product requests use JSON fields `product_name`,
-`description`, `price`, and `quantity`. Access to product writes/deletes is
-determined by the user's database role.
+`description`, `price`, and `quantity`. Only the `admin` username can write or
+delete products; other accounts have read-only access.
 
-API authentication uses the `auth_users` table. Apply migration
-`006_prepare_auth_users_for_api` before deploying the API changes; it adds
-database-backed roles and upgrades legacy plain-text passwords to password
-hashes. The existing `admin` account is assigned the `admin` role. New accounts
-default to the `user` role; assign elevated roles only to trusted accounts.
+API authentication uses the existing `auth_users` table (`id`, `username`, and
+`password`); it does not require a role column or a new migration. The account
+named `admin` receives admin permissions, and other accounts are read-only.
+Plain-text passwords continue to work and are upgraded to a hash after a
+successful login; the existing password column must be wide enough for a
+standard password hash.
 
 Configure `JWT_SECRET` and `REFRESH_TOKEN_KEY` as separate, randomly generated
 secrets of at least 32 characters in the deployment environment. Set

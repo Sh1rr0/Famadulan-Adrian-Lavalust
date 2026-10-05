@@ -84,8 +84,8 @@ class Api
     /**
      * Verify User On Each Request
      *
-     * When TRUE, require_jwt() checks that the user exists and takes
-     * role and scopes from the database instead of the token claims.
+     * When TRUE, require_jwt() checks that the user exists and derives its
+     * role from the account name for auth tables without a role column.
      *
      * @var boolean
      */
@@ -545,7 +545,7 @@ class Api
      * scopes_for_role
      *
      * Single source of truth for role to scope mapping. Scopes are always
-     * derived from the role stored in the database, never from token claims.
+     * derived from the server-side account identity, never token claims.
      *
      * @param string $role
      * @return array
@@ -565,9 +565,8 @@ class Api
     /**
      * require_jwt
      *
-     * Validates the bearer token. When jwt_verify_user is enabled, the
-     * user must also exist in the users table, and the returned role and
-     * scopes come from the database instead of the token.
+     * Validates the bearer token and, when enabled, confirms its account
+     * still exists. The admin account is identified by username.
      *
      * @return array<string,mixed>
      */
@@ -582,7 +581,7 @@ class Api
 
         if ($this->verify_user) {
             $stmt = $this->_lava->db->raw(
-                "SELECT id, role FROM {$this->users_table} WHERE id = ? LIMIT 1",
+                "SELECT id, username FROM {$this->users_table} WHERE id = ? LIMIT 1",
                 [$payload['sub']]
             );
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -592,8 +591,9 @@ class Api
             }
 
             // Server-side values win over whatever the token claims.
-            $payload['role']   = $user['role'];
-            $payload['scopes'] = $this->scopes_for_role($user['role']);
+            $role = $user['username'] === 'admin' ? 'admin' : 'user';
+            $payload['role']   = $role;
+            $payload['scopes'] = $this->scopes_for_role($role);
         }
 
         return $payload;
@@ -679,7 +679,7 @@ class Api
         }
 
         $user_stmt = $this->_lava->db->raw(
-            "SELECT id, role FROM {$this->users_table} WHERE id = ? LIMIT 1",
+            "SELECT id, username FROM {$this->users_table} WHERE id = ? LIMIT 1",
             [$payload['sub']]
         );
         $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
@@ -692,8 +692,8 @@ class Api
 
         $new_tokens = $this->issue_tokens([
             'id'     => $user['id'],
-            'role'   => $user['role'],
-            'scopes' => $this->scopes_for_role($user['role']),
+            'role'   => $user['username'] === 'admin' ? 'admin' : 'user',
+            'scopes' => $this->scopes_for_role($user['username'] === 'admin' ? 'admin' : 'user'),
         ]);
 
         $this->respond([
