@@ -26,6 +26,11 @@ class Create_products_table {
                 'constraint' => 255,
                 'null'       => FALSE,
             ],
+            'category' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 100,
+                'null'       => TRUE,
+            ],
             'description' => [
                 'type' => 'TEXT',
                 'null' => TRUE,

@@ -56,7 +56,7 @@ class ApiController extends Controller
         $this->require_scope($auth, 'read');
 
         $products = $this->db->raw(
-            'SELECT id, product_name, description, price, quantity, created_at, updated_at
+            'SELECT id, product_name, category, description, price, quantity, created_at, updated_at
              FROM products ORDER BY id DESC'
         )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -77,12 +77,19 @@ class ApiController extends Controller
         }
 
         $this->db->raw(
-            'INSERT INTO products (product_name, description, price, quantity)
-             VALUES (?, ?, ?, ?)',
-            [$product['product_name'], $product['description'], $product['price'], $product['quantity']]
+            'INSERT INTO products (product_name, category, description, price, quantity)
+             VALUES (?, ?, ?, ?, ?)',
+            [$product['product_name'], $product['category'], $product['description'], $product['price'], $product['quantity']]
         );
 
-        $this->api->respond(['message' => 'Product created'], 201);
+        $product_id = $this->db->last_id();
+        $created = $this->db->raw(
+            'SELECT id, product_name, category, description, price, quantity, created_at, updated_at
+             FROM products WHERE id = ?',
+            [$product_id]
+        )->fetch(PDO::FETCH_ASSOC);
+
+        $this->api->respond(['data' => $created], 201);
     }
 
     public function updateProduct($id)
@@ -102,14 +109,14 @@ class ApiController extends Controller
             $this->api->respond_error($product['error'], 422);
         }
 
-        $result = $this->db->raw(
+        $updated_count = $this->db->raw(
             'UPDATE products
-             SET product_name = ?, description = ?, price = ?, quantity = ?, updated_at = CURRENT_TIMESTAMP
+             SET product_name = ?, category = ?, description = ?, price = ?, quantity = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ?',
-            [$product['product_name'], $product['description'], $product['price'], $product['quantity'], $product_id]
+            [$product['product_name'], $product['category'], $product['description'], $product['price'], $product['quantity'], $product_id]
         );
 
-        if ($result->rowCount() === 0) {
+        if ($updated_count === 0) {
             $exists = $this->db->raw('SELECT id FROM products WHERE id = ? LIMIT 1', [$product_id])
                                ->fetch(PDO::FETCH_ASSOC);
             if (!$exists) {
@@ -117,7 +124,13 @@ class ApiController extends Controller
             }
         }
 
-        $this->api->respond(['message' => 'Product updated']);
+        $updated = $this->db->raw(
+            'SELECT id, product_name, category, description, price, quantity, created_at, updated_at
+             FROM products WHERE id = ?',
+            [$product_id]
+        )->fetch(PDO::FETCH_ASSOC);
+
+        $this->api->respond(['data' => $updated]);
     }
 
     public function deleteProduct($id)
@@ -131,8 +144,8 @@ class ApiController extends Controller
             $this->api->respond_error('Invalid product id', 422);
         }
 
-        $result = $this->db->raw('DELETE FROM products WHERE id = ?', [$product_id]);
-        if ($result->rowCount() === 0) {
+        $deleted_count = $this->db->raw('DELETE FROM products WHERE id = ?', [$product_id]);
+        if ($deleted_count === 0) {
             $this->api->respond_error('Product not found', 404);
         }
 
@@ -231,6 +244,7 @@ class ApiController extends Controller
     private function validated_product(array $input): array
     {
         $name = $input['product_name'] ?? null;
+        $category = $input['category'] ?? '';
         $description = $input['description'] ?? '';
         $price = $input['price'] ?? null;
         $quantity = $input['quantity'] ?? null;
@@ -241,6 +255,9 @@ class ApiController extends Controller
         if (!is_string($description)) {
             return ['error' => 'description must be a string'];
         }
+        if (!is_string($category) || strlen($category) > 100) {
+            return ['error' => 'category must be a string no longer than 100 characters'];
+        }
         if (!is_numeric($price) || (float) $price < 0 || (float) $price > 99999999.99) {
             return ['error' => 'price must be between 0 and 99999999.99'];
         }
@@ -250,6 +267,7 @@ class ApiController extends Controller
 
         return [
             'product_name' => trim($name),
+            'category' => trim($category),
             'description' => $description,
             'price' => (float) $price,
             'quantity' => (int) $quantity,
